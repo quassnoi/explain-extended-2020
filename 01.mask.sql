@@ -1,0 +1,33 @@
+WITH	parameters AS
+	(
+	SELECT	*
+	FROM	(
+		VALUES
+		(112, 50)
+		) v (width, height)
+	),
+	mask AS
+	(
+	SELECT	x, y,
+		CASE
+		WHEN x BETWEEN 40 AND 90 AND y BETWEEN 15 AND 35 THEN 4
+		WHEN x BETWEEN 15 AND 65 AND y BETWEEN 10 AND 30 THEN 2
+		ELSE 0 END AS depth
+	FROM	parameters
+	CROSS JOIN LATERAL
+		GENERATE_SERIES(0, height - 1) y
+	CROSS JOIN LATERAL
+		GENERATE_SERIES(0, width - 1) x
+	)
+SELECT	STRING_AGG(COALESCE(depth::TEXT, ' '), '' ORDER BY x)
+FROM	parameters
+CROSS JOIN LATERAL
+	GENERATE_SERIES(0, height - 1) y
+CROSS JOIN LATERAL
+	GENERATE_SERIES(0, width - 1) x
+JOIN	mask
+USING	(x, y)
+GROUP BY
+	y
+ORDER BY
+	y;
